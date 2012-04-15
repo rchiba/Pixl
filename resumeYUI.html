@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<link rel="stylesheet" type="text/css" href="css/boxStyle.css" />
+
+<script type="text/javascript" src="http://yui.yahooapis.com/3.4.0/build/yui/yui-min.js"></script>
+
+<!--<script type="text/javascript" src="../../yui/build/yui/yui-min.js"></script>-->
+<script type="text/javascript" src="js/box.js"></script>
+<script type="text/javascript" src="js/sensor.js"></script>
+<script type="text/javascript" src="js/environment.js"></script>
+<script type="text/javascript" src="js/picBox.js"></script>
+<script type="text/javascript" src="js/audioBox.js"></script>
+<script type="text/javascript" src="js/videoBox.js"></script>
+
+<!-- bootstrap -->
+<script type="text/javascript" src="bootstrap/js/bootstrap.min.js"></script>
+<link rel="stylesheet" type="text/css" href="bootstrap/css/bootstrap.css" />
+
+<!-- custom JS -->
+<script type="text/javascript">
+// Tests for textbox
+
+YUI({
+    debug:true,
+    useBrowserConsole: true,
+    
+}).use('node', 'box', 'picbox', 'audiobox', 'videobox', 'sensor', 'environment', 'event-synthetic', function (Y) {
+
+  Y.on('domready', function(){
+  
+      Y.log('domready');
+      var sensor = new Y.pixel.Sensor();
+      /*var environment = Y.pixel.Environment({
+        parentNode:'#parent'
+      });*/
+      
+      Y.one('#create').on('click',function(){
+        var box = new Y.pixel.Box({
+            parentNode:'#parent',
+            defaultClass:'contrast'
+        });
+        box.render(Y.one('#parent')); 
+        box.setState('move');
+        
+      });
+      
+      Y.one('#createLabel').on('click',function(){
+        var box = new Y.pixel.Box({
+            parentNode:'#parent',
+            defaultClass:'contrastTitle'
+        });
+        box.render(Y.one('#parent'));
+        box.setState('move');
+        
+      });
+      
+
+      Y.one('#create2').on('click',function(){
+        var pic = new Y.pixel.PicBox({
+            parentNode:'#parent',
+            pic:'shadow.JPG'
+        });
+        pic.render(Y.one('#parent'));
+        pic.setState('move');
+      });
+      
+      Y.one('#createAudio').on('click',function(){
+        var audio = new Y.pixel.AudioBox({
+            parentNode:'#parent',
+            mp3Src:'audio.mp3'
+        });
+        audio.render(Y.one('#parent'));
+        audio.setState('move');
+      });
+      
+      Y.one('#createVideo').on('click',function(){
+        var video = new Y.pixel.VideoBox({
+            parentNode:'#parent',
+            videoLink:'http://youtu.be/QH2-TGUlwu4'
+        });
+        video.render(Y.one('#parent'));
+        video.setState('move');
+      });
+      
+      Y.one('#edit').on('click',function(){
+        sensor.broadcastState('move');
+        
+      });
+      
+      Y.one('#done').on('click',function(){
+        sensor.broadcastState('done');
+      });
+      
+  });
+  
+});
+
+</script>
+</head>
+
+<body>
+<div class="customScaleBG" style="background-image:url(img/nature2.jpg)"></div>
+<div class="container" style="position:relative;">
+<div class="gridBG"></div>
+<center>
+<input type="button" class="btn" value="Create Text" id="create">
+<input type="button" class="btn" value="Create Label" id="createLabel">
+<input type="button" class="btn" value="Create Pic" id="create2">
+<input type="button" class="btn" value="Create Audio" id="createAudio">
+<input type="button" class="btn" value="Create Video" id="createVideo">
+<input type="button" class="btn btn-primary" value="edit" id="edit">
+<input type="button" class="btn btn-primary" value="done" id="done">
+</center>
+<div class="row">
+  <div class="span12" id="parent">
+  
+  
+  </div>
+</div>
+
+</div>
+</body>
+
+</html>

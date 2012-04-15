@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" type="text/css" href="jquery-ui/css/ui-lightness/jquery-ui-1.8.18.custom.css" />
+<link rel="stylesheet" type="text/css" href="css/boxStyle.css" />
+
+<script type="text/javascript" src="jquery-ui/js/jquery-1.7.1.min.js"></script>
+<script type="text/javascript" src="jquery-ui/js/jquery-ui-1.8.18.custom.min.js"></script>
+<script type="text/javascript" src="js/mediator.js"></script>
+<script type="text/javascript" src="js/helpers.js"></script>
+<script type="text/javascript" src="js/box.js"></script>
+<script type="text/javascript" src="js/picbox.js"></script>
+<script type="text/javascript" src="js/markdown/Markdown.Converter.js"></script>
+<script type="text/javascript" src="js/markdown/Markdown.Sanitizer.js"></script>
+
+<!-- fancybox -->
+<script type="text/javascript" src="js/jquery.fancybox/fancybox/jquery.fancybox-1.3.4.pack.js"></script>
+<script type="text/javascript" src="js/jquery.fancybox/fancybox/jquery.easing-1.3.pack.js"></script>
+<link rel="stylesheet" href="js/jquery.fancybox/fancybox/jquery.fancybox-1.3.4.css" type="text/css" media="screen" />
+
+<!-- bootstrap -->
+<script type="text/javascript" src="bootstrap/js/bootstrap.min.js"></script>
+<link rel="stylesheet" type="text/css" href="bootstrap/css/bootstrap.css" />
+
+
+
+<!-- custom JS -->
+<script type="text/javascript">
+if(typeof console == 'undefined'){
+    console = {};
+    console.log = function(){
+    
+    }
+}
+
+$(document).ready(function(){
+    if(typeof Pixl == 'undefined') Pixl = {};
+    var mediator = new Pixl.Mediator();
+    
+    bind();
+    $('.gridBG').fadeIn(1000);
+    function bind(){
+        $('#create').unbind();
+        $('#create').click(function(){
+            var box = new Pixl.Box(mediator,$('#parent'));
+            box.init();
+            Pixl.boxes[box.id] = box;
+        });
+        
+        $('#createPic').unbind();
+        $('#createPic').click(function(){
+            var tempImgs = ['http://farm8.staticflickr.com/7037/6908786928_bc4f0f10ce.jpg', 'http://farm8.staticflickr.com/7200/7054868159_45b9a76944.jpg', 'http://farm6.staticflickr.com/5344/6908772690_55825378eb.jpg', 'http://farm5.staticflickr.com/4042/4361410527_1bd2f3b363_b.jpg', 'http://farm3.staticflickr.com/2768/4276460743_a80562f7f0_z.jpg', 'http://farm4.staticflickr.com/3493/3897852888_db8621ff13_b.jpg', 'http://farm5.staticflickr.com/4051/4366552915_cf330814bc_b.jpg']
+            var picBox = new Pixl.PicBox(mediator,$('#parent'),tempImgs[Math.floor(Math.random()*tempImgs.length)]);
+            picBox.init();
+            Pixl.boxes[picBox.id] = picBox;
+        });
+        
+        $('body').unbind();
+        $('body').click(function(e){
+            if(($('body')[0] === $(e.target)[0]) || ($('#parent')[0] === $(e.target)[0])){
+                mediator.publish( 'global:changeState', {'state':'inactive', 'id':'global'} ); 
+            }
+        });
+        
+        $('#edit').unbind();
+        $('#edit').click(function(){
+            bind();
+            $('.gridBG').fadeIn(200);
+            mediator.publish( 'global:changeState', {'state':'inactive', 'id':'global'} ); 
+        });
+        
+        $('#done').unbind();
+        $('#done').click(function(){
+            $('#create').unbind();
+            $('#createPic').unbind();
+            $('.gridBG').fadeOut(200);
+            mediator.publish( 'global:changeState', {'state':'static', 'id':'global'} ); 
+        });
+    }
+    
+});
+</script>
+</head>
+
+<body>
+<div class="customScaleBG" style="background-image:url(img/nature2.jpg)"></div>
+<div class="container" style="position:relative;">
+<div class="gridBG"></div>
+<center>
+<input type="button" class="btn" value="Create Text" id="create">
+<input type="button" class="btn" value="Create Pic" id="createPic">
+<input type="button" class="btn" value="Create Audio" id="createAudio">
+<input type="button" class="btn" value="Create Video" id="createVideo">
+<input type="button" class="btn btn-primary" value="edit" id="edit">
+<input type="button" class="btn btn-primary" value="done" id="done">
+</center>
+<div class="row">
+  <div class="span12" id="parent">
+  
+  
+  </div>
+</div>
+
+</div>
+</body>
+
+</html>

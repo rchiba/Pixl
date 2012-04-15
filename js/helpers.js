@@ -12,5 +12,5 @@ Pixl.Helpers.genHash = function(){
     return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
 }
 
-Pixl.boxes = {}; // all the box elements on the page, as key (id) value (obj)
+Pixl.boxes = []; // all the box elements on the page in a array
 

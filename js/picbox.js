@@ -7,11 +7,12 @@ Pixl.PicBox  = (function (box) {
         this.base = box;
         this.base(m, p);
         this.img = myImg;
+        this.type = 'pic';
     }
     module.prototype = new box;
     
     module.prototype.renderUI = function(){
-        
+        console.log('picbox renderUI '+this.img);
         var box = $("<div>");
         box.attr('id', this.id);
         box.attr('class', 'contrast dropShadow');
@@ -80,8 +81,8 @@ Pixl.PicBox  = (function (box) {
     // settings for the draggable resizable are slightly different
     module.prototype.makeEditable = function(){
         // only allow makeEditable after this.height is set
-        if(typeof this.height !== 'undefined'){
-            console.log(this.id+': makeEditable');
+        if(typeof this.height !== 'undefined' && this.height !== ''){
+            console.log(this.id+': makeEditable '+this.height);
             $( "#"+this.id ).draggable({
                 containment: '#'+this.parent.attr('id'),
                 grid: [ 10,10 ],

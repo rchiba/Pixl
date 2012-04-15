@@ -36,6 +36,33 @@ if(typeof console == 'undefined'){
 $(document).ready(function(){
     if(typeof Pixl == 'undefined') Pixl = {};
     var mediator = new Pixl.Mediator();
+    pullLocal();
+    
+    // if we have any local data, create instances from it
+    function pullLocal(){
+        console.log('pullLocal()');
+        var localBoxes = localStorage.getItem('pixl')
+        if(localBoxes !== null){
+            Pixl.boxes = [];
+            var jsonBoxes = JSON.parse(localBoxes);
+            console.log(jsonBoxes);
+            for(var i = 0; i < jsonBoxes.length; i++){
+                var boxJSON = jsonBoxes[i];
+                if(boxJSON.type == 'box'){
+                    var box = new Pixl.Box(mediator,$('#parent'));
+                    box.deserialize(boxJSON);
+                    box.init();
+                    Pixl.boxes.push( box );
+                } else if(boxJSON.type == 'pic'){
+                    console.log(boxJSON.img);
+                    var picBox = new Pixl.PicBox(mediator,$('#parent'),boxJSON.img);
+                    picBox.deserialize(boxJSON);
+                    picBox.init();
+                    Pixl.boxes.push( picBox );
+                }
+            }
+        }
+    }
     
     bind();
     $('.gridBG').fadeIn(1000);
@@ -44,7 +71,7 @@ $(document).ready(function(){
         $('#create').click(function(){
             var box = new Pixl.Box(mediator,$('#parent'));
             box.init();
-            Pixl.boxes[box.id] = box;
+            Pixl.boxes.push( box );
         });
         
         $('#createPic').unbind();
@@ -52,7 +79,26 @@ $(document).ready(function(){
             var tempImgs = ['http://farm8.staticflickr.com/7037/6908786928_bc4f0f10ce.jpg', 'http://farm8.staticflickr.com/7200/7054868159_45b9a76944.jpg', 'http://farm6.staticflickr.com/5344/6908772690_55825378eb.jpg', 'http://farm5.staticflickr.com/4042/4361410527_1bd2f3b363_b.jpg', 'http://farm3.staticflickr.com/2768/4276460743_a80562f7f0_z.jpg', 'http://farm4.staticflickr.com/3493/3897852888_db8621ff13_b.jpg', 'http://farm5.staticflickr.com/4051/4366552915_cf330814bc_b.jpg']
             var picBox = new Pixl.PicBox(mediator,$('#parent'),tempImgs[Math.floor(Math.random()*tempImgs.length)]);
             picBox.init();
-            Pixl.boxes[picBox.id] = picBox;
+            Pixl.boxes.push( picBox );
+        });
+        
+        $('#switchBG').unbind();
+        $('#switchBG').click(function(){
+            $('.customScaleBG').css('background-image','url(img/'+Math.floor(Math.random()*13+1)+'.jpg)');
+        });
+        
+        $('#addSpace').unbind();
+        $('#addSpace').click(function(){
+            var length = $('.contrast').length;
+            var space = 300;
+            $('.contrast').each(function(index, item){
+                length--;
+                $(item).animate({'top':'+='+space},500, function(){
+                    if(length === 0){
+                        storeAllBoxes();
+                    }
+                });
+            });
         });
         
         $('body').unbind();
@@ -74,8 +120,23 @@ $(document).ready(function(){
             $('#create').unbind();
             $('#createPic').unbind();
             $('.gridBG').fadeOut(200);
+            $('body').unbind();
             mediator.publish( 'global:changeState', {'state':'static', 'id':'global'} ); 
+            
+            // store all items in localstorage
+            storeAllBoxes();
+            
         });
+    }
+    
+    function storeAllBoxes(){
+        var boxArr = [];
+        for(var i = 0; i < Pixl.boxes.length; i++){
+            var box = Pixl.boxes[i];
+            boxArr.push(box.serialize());
+        }
+        var boxString = JSON.stringify(boxArr);
+        localStorage.setItem('pixl', boxString);    
     }
     
 });
@@ -83,17 +144,20 @@ $(document).ready(function(){
 </head>
 
 <body>
-<div class="customScaleBG" style="background-image:url(img/nature2.jpg)"></div>
+<div class="customScaleBG" style="background-image:url(img/9.jpg)"></div>
 <div class="container" style="position:relative;">
 <div class="gridBG"></div>
+<div id="controls">
 <center>
 <input type="button" class="btn" value="Create Text" id="create">
 <input type="button" class="btn" value="Create Pic" id="createPic">
-<input type="button" class="btn" value="Create Audio" id="createAudio">
+<input type="button" class="btn" value="Switch BG" id="switchBG">
 <input type="button" class="btn" value="Create Video" id="createVideo">
+<input type="button" class="btn" value="Add Space" id="addSpace">
 <input type="button" class="btn btn-primary" value="edit" id="edit">
 <input type="button" class="btn btn-primary" value="done" id="done">
 </center>
+</div>
 <div class="row">
   <div class="span12" id="parent">
   

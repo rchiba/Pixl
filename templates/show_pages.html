@@ -1,0 +1,86 @@
+{% extends "layout.html" %}
+{% block body %}
+  {% if session.logged_in %}
+    <form action="{{ url_for('add_page') }}" method=post class=add-entry>
+      Create a page
+      <dl>
+        <dt>Title:
+        <dd><input type=text size=30 name=title>
+        <dt>Description:
+        <dd><textarea name=description rows=5 cols=40></textarea>
+        <dd><input type=submit value=Create>
+      </dl>
+    </form>
+  {% endif %}
+  <ul class=entries>
+  {% for page in pages %}
+    <div class="pageItem">
+        <div class="pageRemove">x</div>
+        <div class="pageTitle">{{ page.title }}</div> <br />
+        <div class="pageDescription">
+        {{ page.description|safe }}
+        </div>
+    </div>
+  {% else %}
+    <li><em>Unbelievable.  No entries here so far</em>
+  {% endfor %}
+  </ul>
+  
+<script>
+var Page = (function () {
+ 
+    // constructor
+    var module = function (container) {
+        this.container = container;
+    };
+    
+    // if not building out of existing dom
+    module.prototype.renderUI = function(){
+        
+    }
+    
+    // called when dom is ready
+    module.prototype.init = function(){
+        this.bindUI();
+    }
+    
+    function handlePageRemove(){
+        var that = this;
+        console.log(that.container.find('.pageTitle'));
+        $.ajax({
+          url: "/removepage",
+          type: "POST",
+          data: '{"title":"'+that.container.find('.pageTitle').text()+'"}',
+          context: document.body,
+          contentType: 'application/json;charset=UTF-8' 
+        }).success(function(res) { 
+            console.log('removed successfully');
+            console.log(res);
+            that.container.fadeOut(function(){
+                that.container.remove();
+            });
+        }).error(function(err){
+            console.log(err);
+        });
+    }
+    
+    module.prototype.bindUI = function(){
+        var that = this;
+        this.container.find('.pageRemove').click(handlePageRemove.bind(this));
+    }
+ 
+
+    // return module
+    return module;
+})();
+ 
+$(document).ready(function(){
+    $('.pageItem').each(function(index, item){
+        var page = new Page($(item));
+        page.init();
+    });
+});
+
+</script>
+  
+{% endblock %}

@@ -1,30 +1,30 @@
 {% extends "layout.html" %}
 {% block body %}
   {% if session.logged_in %}
-    <form action="{{ url_for('add_page') }}" method=post class=add-entry>
-      Create a page
-      <dl>
-        <dt>Title:
-        <dd><input type=text size=30 name=title>
-        <dt>Description:
-        <dd><textarea name=description rows=5 cols=40></textarea>
-        <dd><input type=submit value=Create>
-      </dl>
-    </form>
+    
   {% endif %}
-  <ul class=entries>
   {% for page in pages %}
-    <div class="pageItem">
-        <div class="pageRemove">x</div>
-        <div class="pageTitle">{{ page.title }}</div> <br />
+    <div class="pageItem dropShadow">
+        <div class="pageRemove clickable">x</div>
+        <div class="pageTitle"><a href="/{{ page.owner }}/{{ page.title }}"><h1>{{ page.title }}</h1></a></div> <br />
         <div class="pageDescription">
         {{ page.description|safe }}
         </div>
     </div>
-  {% else %}
-    <li><em>Unbelievable.  No entries here so far</em>
   {% endfor %}
-  </ul>
+    <div class="pageItem dropShadow pageItemCreate clickable">
+    <div class="pageItemCreateForm">
+    <form action="{{ url_for('add_page') }}" method="post" class="add-entry" style="margin-left:20px;">
+      <dl>
+        <dt>Title:
+        <dd><input type=text size=30 name=title>
+        <dt>Description:
+        <dd><textarea name=description rows=2 cols=40></textarea>
+        <dd><input type=submit value=Create>
+      </dl>
+    </form>
+    </div>
+    </div>
   
 <script>
 var Page = (function () {
@@ -47,8 +47,9 @@ var Page = (function () {
     function handlePageRemove(){
         var that = this;
         console.log(that.container.find('.pageTitle'));
+        
         $.ajax({
-          url: "/removepage",
+          url: "save",
           type: "POST",
           data: '{"title":"'+that.container.find('.pageTitle').text()+'"}',
           context: document.body,
@@ -65,7 +66,6 @@ var Page = (function () {
     }
     
     module.prototype.bindUI = function(){
-        var that = this;
         this.container.find('.pageRemove').click(handlePageRemove.bind(this));
     }
  
@@ -74,11 +74,47 @@ var Page = (function () {
     return module;
 })();
  
+var PageCreate = (function () {
+ 
+    // constructor
+    var module = function (container) {
+        this.container = container;
+    };
+    
+    // if not building out of existing dom
+    module.prototype.renderUI = function(){
+        
+    }
+    
+    // called when dom is ready
+    module.prototype.init = function(){
+        this.bindUI();
+    }
+    
+    // when user clicks on create page
+    function handlePageCreateClick(){
+        var that = this;
+        that.container.find('.pageItemCreateForm').fadeIn();
+    }
+    
+    module.prototype.bindUI = function(){
+        this.container.click(handlePageCreateClick.bind(this));
+    }
+ 
+
+    // return module
+    return module;
+})();
+ 
 $(document).ready(function(){
+
     $('.pageItem').each(function(index, item){
         var page = new Page($(item));
         page.init();
     });
+
+    var pageCreate = new PageCreate($('.pageItemCreate:first'));
+    pageCreate.init();
 });
 
 </script>

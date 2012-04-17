@@ -1,0 +1,289 @@
+{% extends "layout.html" %}
+{% block body %}
+<!-- custom JS -->
+<script type="text/javascript">
+if(typeof console == 'undefined'){
+    console = {};
+    console.log = function(){
+    
+    }
+}
+
+// the AJAX javascript module in charge of creating this page based
+// on either local or pulled data, and syncing the two
+// and keeping track of the box objects as they are created / destroyed
+var PageManager = (function () {
+ 
+ 
+    // constructor
+    var module = function (mediator, container) {
+        this.container = container;
+        this.mediator = mediator;
+        this.init();
+        this.localEnabled = false; // is local storage enabled?
+        this.boxData = []; // the JSON representations of the javascript box objects
+        this.boxes = []; // this is used as a temp holding area for javascript box objects
+        
+        this.bgImage = '{{ page.bgImage }}';
+        
+        // subscribe to all box deletion events
+        this.mediator.subscribe('boxDestroy', function(args){
+            // when a box is destroyed, update this array
+            for(var i=0; i < this.boxes.length; i++){
+                if(this.boxes[i]['id'] == args['id']){
+                    this.boxes.splice(i,1);
+                }
+            }
+        }, this);
+        
+    };
+    
+    // called when dom is ready
+    module.prototype.init = function(){
+        this.phoneHome();
+    }
+    
+    
+    // call server for element data
+    module.prototype.phoneHome = function(){
+        // pull boxes from database
+        var that = this;
+        $.ajax({
+          url: document.URL+".json"
+        }).success(function(res) { 
+            console.log(document.URL+".json"+' returned successfully');
+            console.log(res);
+            
+            // decide if I want local or updated copy
+            var localData = localStorage.getItem('pixl:'+document.URL);
+            if (localData){
+                var localBoxes = localData['boxes'];
+                var localLastUpdated = localData['lastUpdated'];
+            }
+            try{
+                var remoteData = JSON.parse(res);
+                var remoteLastUpdated = remoteData['lastUpdated'];
+                var remoteBoxes = remoteData['boxes'];
+                var boxes = [];
+                if(localLastUpdated && remoteLastUpdated < localLastUpdated && that.localEnabled === true){
+                    // local is most recent state
+                    that.boxData = localBoxes;
+                    // push changes to server
+                    
+                } else{
+                    // remote is most recent state
+                    that.boxData = remoteBoxes;
+                    // update local copy
+                    that.storeLocal();
+                }
+                that.buildPage();
+            } catch(err){
+                console.log(err.stack);
+            }
+        }).error(function(err){
+            console.log('/elements returned with err');
+            console.log(err);
+        }); 
+    }
+    
+    // build page based on data inside this.boxes
+    module.prototype.buildPage = function(){
+        console.log('buildPage()');
+        console.log(this.boxes);
+        var boxes = this.boxData;
+        for(var i = 0; i < boxes.length; i++){
+            var boxObj = boxes[i];
+            if(boxObj.type == 'box'){
+                var box = new Pixl.Box(this.mediator,$('#parent'));
+                box.deserialize(boxObj);
+                box.init();
+                this.boxes.push( box );
+            } else if(boxObj.type == 'pic'){
+                var picBox = new Pixl.PicBox(this.mediator,$('#parent'),boxObj.img);
+                picBox.deserialize(boxObj);
+                picBox.init();
+                this.boxes.push( picBox );
+            }
+        }
+        
+        // change state to static automatically
+        {% if not session.logged_in %}
+        var that = this;
+        function setStatic(){
+            console.log('setStatic');
+            that.mediator.publish( 'global:changeState', {'state':'static', 'id':'global'} ); 
+        }
+        setStatic();
+        // hack to cover slow loading image boxes that don't set draggable until later
+        window.setTimeout(setStatic, 500);
+        window.setTimeout(setStatic, 2000);
+        {% endif %}
+    
+    }
+    
+    // stores everything in this.boxes in a local store (which we don't currently use)
+    module.prototype.storeLocal = function(){
+        console.log('storeLocal');
+        var boxes = this.boxes;
+        var boxArr = [];
+        for(var i = 0; i < boxes.length; i++){
+            var box = boxes[i];
+            boxArr.push(box.serialize());
+        }
+        var boxObj = {};
+        boxObj['boxes'] = boxArr;
+        boxObj['lastUpdated'] = new Date().getTime();
+        var boxString = JSON.stringify(boxArr);
+        console.log('storeLocal: '+'pixl:'+document.URL);
+        localStorage.setItem('pixl:'+document.URL, boxString);    
+    }
+    
+    // sends this.boxes to remote
+    module.prototype.storeRemote = function(){
+        console.log('about to /save with ');
+        
+        // serialize all boxes
+        var boxes = this.boxes;
+        var boxArr = [];
+        for(var i = 0; i < boxes.length; i++){
+            var box = boxes[i];
+            boxArr.push(box.serialize());
+        }
+        
+        // construct the json to send up
+        var req = {};
+        req['boxes'] = boxArr;
+        req['bgImage'] = this.bgImage;
+        console.log(JSON.stringify(req));
+        $.ajax({
+          url: document.URL+"/save",
+          type: "POST",
+          data: JSON.stringify(req),
+          context: document.body,
+          contentType: 'application/json;charset=UTF-8' 
+        }).success(function(res) { 
+            console.log('/save returned successfully');
+            console.log(res);
+            
+        }).error(function(err){
+            console.log('/save returned with err');
+            console.log(err);
+        }); 
+    }
+    
+    module.prototype.bindUI = function(){
+
+    }
+ 
+
+    // return module
+    return module;
+})();
+
+$(document).ready(function(){
+    if(typeof Pixl == 'undefined') Pixl = {};
+    var mediator = new Pixl.Mediator();
+    var pageManager = new PageManager(mediator, $('#parent'));
+    
+    
+    
+    bind();
+    $('.gridBG').fadeIn(1000);
+    function bind(){
+        $('#create').unbind();
+        $('#create').click(function(){
+            var box = new Pixl.Box(mediator,$('#parent'));
+            box.init();
+            pageManager.boxes.push( box );
+        });
+        
+        $('#createPic').unbind();
+        $('#createPic').click(function(){
+            var tempImgs = ['http://farm8.staticflickr.com/7037/6908786928_bc4f0f10ce.jpg', 'http://farm8.staticflickr.com/7200/7054868159_45b9a76944.jpg', 'http://farm6.staticflickr.com/5344/6908772690_55825378eb.jpg', 'http://farm5.staticflickr.com/4042/4361410527_1bd2f3b363_b.jpg', 'http://farm3.staticflickr.com/2768/4276460743_a80562f7f0_z.jpg', 'http://farm4.staticflickr.com/3493/3897852888_db8621ff13_b.jpg', 'http://farm5.staticflickr.com/4051/4366552915_cf330814bc_b.jpg']
+            var picBox = new Pixl.PicBox(mediator,$('#parent'),tempImgs[Math.floor(Math.random()*tempImgs.length)]);
+            picBox.init();
+            pageManager.boxes.push( picBox );
+        });
+        
+        $('#switchBG').unbind();
+        $('#switchBG').click(function(){
+            var bgImage = '/static/img/'+Math.floor(Math.random()*13+1)+'.jpg';
+            $('.customScaleBG').css('background-image','url('+bgImage+')');
+            pageManager.bgImage = bgImage;
+        });
+        
+        $('#addSpace').unbind();
+        $('#addSpace').click(function(){
+            var length = $('.contrast').length;
+            var space = 300;
+            $('.contrast').each(function(index, item){
+                length--;
+                $(item).animate({'top':'+='+space},500, function(){
+                    if(length === 0){
+                        pageManager.storeRemote();
+                    }
+                });
+            });
+        });
+        
+        $('body').unbind();
+        $('body').click(function(e){
+            {% if session.logged_in %}
+            if(($('body')[0] === $(e.target)[0]) || ($('#parent')[0] === $(e.target)[0])){
+                mediator.publish( 'global:changeState', {'state':'inactive', 'id':'global'} ); 
+            }
+            {% endif %}
+        });
+        
+        $('#edit').unbind();
+        $('#edit').click(function(){
+            bind();
+            $('.gridBG').fadeIn(200);
+            mediator.publish( 'global:changeState', {'state':'inactive', 'id':'global'} ); 
+        });
+        
+        $('#done').unbind();
+        $('#done').click(function(){
+            $('#create').unbind();
+            $('#createPic').unbind();
+            $('.gridBG').fadeOut(200);
+            $('body').unbind();
+            mediator.publish( 'global:changeState', {'state':'static', 'id':'global'} ); 
+            
+            // store all items in localstorage
+            pageManager.storeLocal();
+            pageManager.storeRemote();
+            
+        });
+    }
+    
+    
+    
+});
+</script>
+
+<div class="customScaleBG" style="background-image:url( {{ page.bgImage }} )"></div>
+<div class="container" style="position:relative;">
+<div class="gridBG"></div>
+{% if session.logged_in %}
+<div id="controls">
+<center>
+<input type="button" class="btn" value="Create Text" id="create">
+<input type="button" class="btn" value="Create Pic" id="createPic">
+<input type="button" class="btn" value="Switch BG" id="switchBG">
+<input type="button" class="btn" value="Create Video" id="createVideo">
+<input type="button" class="btn" value="Add Space" id="addSpace">
+<input type="button" class="btn btn-primary" value="edit" id="edit">
+<input type="button" class="btn btn-primary" value="done" id="done">
+</center>
+{% endif %}
+</div>
+<div class="row">
+  <div class="span12" id="parent">
+  
+  
+  </div>
+</div>
+
+</div>
+{% endblock %}

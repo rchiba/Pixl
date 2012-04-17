@@ -24,6 +24,7 @@ Pixl.Box = (function(){
         this.height = '';
         this.top = '';
         this.left = '';
+        this['z-index'] = '';
     }
 
     module.prototype.handleChangeStateSub = function( arg ){
@@ -77,6 +78,10 @@ Pixl.Box = (function(){
         if(this.left !== ''){
             $( "#"+this.id ).css('left', this.left);
         }
+        
+        if(this['z-index'] !== ''){
+            $( "#"+this.id ).css('z-index', this['z-index']);
+        }
     }
     
     // this serializes the object into JSON that can later be imported into the deserialize function
@@ -88,7 +93,8 @@ Pixl.Box = (function(){
             width: $( "#"+this.id ).css('width'),
             height: $( "#"+this.id ).css('height'),
             top: $( "#"+this.id ).css('top'),
-            left: $( "#"+this.id ).css('left')
+            left: $( "#"+this.id ).css('left'),
+            'z-index': $( "#"+this.id ).css('z-index')
         }
         if(typeof this.img !== 'undefined'){
             res.img = this.img;
@@ -108,8 +114,10 @@ Pixl.Box = (function(){
             this.height = res.height;
             this.top = res.top;
             this.left = res.left;
+            this['z-index'] = res['z-index'];
         }catch(e){
-            console.log('ERR: '+e.message);
+            console.log('ERR: ');
+            console.log(e);
         }
     }
     
@@ -222,14 +230,7 @@ Pixl.Box = (function(){
     module.prototype.destroy = function(){
         $( "#"+this.id ).unbind();
         $( "#"+this.id ).remove();
-        
-        // go through global boxes array and remove
-        for(var i = 0; i < Pixl.boxes.length; i++){
-            var box = Pixl.boxes[i];
-            if(box.id == this.id){
-                Pixl.boxes.splice(i,1);
-            }
-        }
+        this.m.publish( 'boxDestroy', {'id':this.id} ); 
     }
     
     module.prototype.handleDblClick = function(e){

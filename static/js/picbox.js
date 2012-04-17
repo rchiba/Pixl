@@ -1,3 +1,14 @@
+// this is to fix this bug with the resizable: http://bugs.jqueryui.com/ticket/4186
+(function() {
+    var oldSetOption = $.ui.resizable.prototype._setOption;
+    $.ui.resizable.prototype._setOption = function(key, value) {
+        oldSetOption.apply(this, arguments);
+        if (key === "aspectRatio") {
+            this._aspectRatio = !!value;
+        }
+    };
+})();
+
 if(typeof Pixl == 'undefined') Pixl = {};
 
 Pixl.PicBox  = (function (box) {
@@ -31,6 +42,7 @@ Pixl.PicBox  = (function (box) {
             box.css('height',that.getImgDimensions()['height']+'px');
             box.css('width',that.getImgDimensions()['width']+'px');
             console.log('box loaded');
+            that.makeStatic();
             that.makeEditable();
         }
         image.src = this.img;

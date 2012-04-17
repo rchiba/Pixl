@@ -1,4 +1,10 @@
+body{
+    background-image:url(../img/worn_dots.png);
+}
 
+.container{
+    width:960px !important; /* override of bootstrap */
+}
 
 .contrast{
     opacity:.9;
@@ -10,6 +16,10 @@
     left:0px;
     z-index:10;
     padding:20px;
+}
+
+.contrast:hover{
+    /*opacity:1;*/
 }
 
 .contentHolder{
@@ -121,6 +131,49 @@ textarea {
     position:fixed;
     width:940px;
     z-index:9999;
+}
+
+.pageItem{
+    width: 270px;
+    height:140px;
+    padding:20px;
+    float:left;
+    margin-left:10px;
+    margin-top:10px;
+    position:relative;
+}
+
+.pageRemove{
+    float:right;
+    font-size:22px;
+}
+
+.pageTitle{
+
+}
+
+.pageDescription{
+
+}
+
+.pageItemCreate{
+    background-image:url(/static/img/addPage.png);
+}
+
+.pageItemCreateForm{
+    display:none; 
+    margin-top:-20px;
+    background-color:#ccc;
+    position:absolute;
+    top:20px;
+    left:0px;
+    width:100%;
+    height:100%;
+}
+
+.clickable{
+    cursor: pointer;
+    cursor: hand;
 }
 
 /*FONTS*/

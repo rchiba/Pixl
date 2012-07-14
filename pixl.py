@@ -40,7 +40,7 @@ app.secret_key = os.urandom(24)
 def connect_db():
     """Returns a new connection to the database."""
     #url = urlparse(os.environ['MONGOHQ_URL'])
-    url = urlparse('mongodb://heroku:cb9a2022a1f1ab178a9be5f3be3269d4@staff.mongohq.com:10063/app5886932')
+    url = urlparse(os.environ.get('MONGOHQ_URL', 'mongodb://heroku:cb9a2022a1f1ab178a9be5f3be3269d4@staff.mongohq.com:10063/app5886932'))
     connection = Connection(url.hostname, url.port)
     db = connection[url.path[1:]]
     db.authenticate(url.username, url.password)
@@ -229,4 +229,4 @@ def add_user():
 
   
 if __name__ == '__main__':
-    app.run()
+    app.run(os.environ.get('PORT', 5000))
